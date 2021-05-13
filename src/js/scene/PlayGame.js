@@ -9,6 +9,7 @@ class PlayGame extends Phaser.Scene {
     this.colors = ['0xFF00FF', '0x00ff00'];
     this.socket = new Socket();
     //
+    //2
   }
   create() {
     this.add.image(240, 320, 'background').setScrollFactor(1, 0);
