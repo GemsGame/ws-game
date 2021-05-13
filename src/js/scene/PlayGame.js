@@ -1,76 +1,95 @@
 import Phaser from 'phaser';
-
+import Socket from './Socket';
 class PlayGame extends Phaser.Scene {
   constructor() {
     super('PlayGame');
+    this.tilesId = [];
+    this._allTiles = [];
+    this._deleteTiles = [];
+    this.colors = ['0xFF00FF', '0x00ff00'];
+    this.socket = new Socket();
   }
-
   create() {
     this.add.image(240, 320, 'background').setScrollFactor(1, 0);
-    this.player = this.physics.add.sprite(240, 320, 'bunny_stand').setScale(0.5);
-    this.player.body.checkCollision.up = false
-    this.player.body.checkCollision.left = false
-    this.player.body.checkCollision.right = false
-
-    this.platforms = this.physics.add.staticGroup();
-
-    for (let i = 0; i < 5; i++) {
-      const x = Phaser.Math.Between(80, 400);
-      const y = 150 * i;
-
-      const platform = this.platforms.create(x, y, 'platform');
-      platform.scale = 0.5;
-
-      const body = platform.body;
-      body.updateFromGameObject();
-    }
-
-    this.physics.add.collider(this.platforms, this.player);
-
-    this.cameras.main.startFollow(this.player);
+    this.createTiles();
   }
+  createTiles() {
+    let row = 1;
+    let count = 1;
+    for (let col = 1; col < 46; col++) {
+      if (count > 5) {
+        row += 1;
+        count = 1;
+      }
+      const x = (50 + 4) * count // вправо
+      const y = (50 + 4) * row; // вверх 
+      const tile = this.add.image(x, y, this.socket.game.tiles[col]).setInteractive();
+      tile.scale = 0.25;
+      this._allTiles.push(tile);
 
-  preload() {
-    this.cursors = this.input.keyboard.createCursorKeys();
+      tile.addListener('pointerdown', () => {
+        const ind = this.tilesId.find(i => i.col === col);
+        if (ind) {
+          this.tilesId = this.tilesId.filter(i => {
+            if (i.col !== ind.col) {
+              return i;
+            }
+          });
+        } else {
+          if (this.tilesId.length < 2) {
+            this.tilesId.push({ col, tile: this.socket.game.tiles[col] });
+          }
+          if (this.tilesId.length === 2) {
+            if (this.tilesId[0].tile === this.tilesId[1].tile) {
+              this._deleteTiles.push(this.tilesId[0].col);
+              this._deleteTiles.push(this.tilesId[1].col);
+              this.socket.userEvent(
+                { delete: this._deleteTiles, touched: this.tilesId }
+              );
+              this.tilesId = [];
+            }
+          }
+
+        }
+        this.socket.userEvent(
+          { delete: this._deleteTiles, touched: this.tilesId }
+        );
+      });
+
+      count += 1;
+    }
   }
 
   update() {
-    this.platforms.children.iterate(child => {
-      const platform = child;
-      const scrollY = this.cameras.main.scrollY;
-      if (platform.y >= scrollY + 700) {
-        platform.y = scrollY - Phaser.Math.Between(50, 100);
-        platform.body.updateFromGameObject();
+    this.tilesTouching();
+  }
+
+
+  tilesTouching() {
+    this._allTiles.forEach(tile => {
+      tile.clearTint();
+    });
+    this.socket.game.players.map(z => {
+      if (z.clientId === this.socket.clientId) {
+        if (z.events && z.events.touched) {
+          z.events.touched.map((i) => {
+            this._allTiles[i.col - 1].setTint(this.colors[1]);
+          });
+        }
+      } else {
+        if (z.events && z.events.touched) {
+          z.events.touched.map((i) => {
+            this._allTiles[i.col - 1].setTint(this.colors[0]);
+          });
+        }
+      }
+
+      if (z.events && z.events.delete) {
+        z.events.delete.map((i) => {
+          this._allTiles[i - 1].removeFromDisplayList();
+        })
       }
     })
-
-    const touchingDown = this.player.body.touching.down;
-
-    if (touchingDown) {
-      // this makes the bunny jump straight up
-      this.player.setVelocityY(-300);
-
-    }
-
-
-    // left and right input logic
-    if (this.cursors.left.isDown && !touchingDown) {
-      this.player.setVelocityX(-200)
-
-    }
-    else if (this.cursors.right.isDown && !touchingDown) {
-      this.player.setVelocityX(200)
-
-    }
-    else {
-      // stop movement if not left or right
-      this.player.setVelocityX(0)
-
-    }
-
   }
-  
 }
-
-
 export default PlayGame;
