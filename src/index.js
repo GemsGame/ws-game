@@ -3,6 +3,7 @@ import './scss/style.scss';
 import PreloadScene from './js/scene/PreloadScene';
 import PlayGame from './js/scene/PlayGame';
 import MenuScene from './js/scene/MenuScene';
+import RoomScene from './js/scene/RoomScene';
 
 const config = {
   type: Phaser.AUTO,
@@ -17,7 +18,7 @@ const config = {
       debug: true
     }
   },
-  scene: [PreloadScene, PlayGame, MenuScene]
+  scene: [PreloadScene, PlayGame, MenuScene, RoomScene]
 };
 
 const game = new Phaser.Game(config);

@@ -3,10 +3,38 @@ import Phaser from 'phaser';
 class PreloadScene extends Phaser.Scene {
   constructor() {
     super('PreloadScene');
+    
   }
 
   preload() {
-    this.load.image('preloaded', 'src/assets/preloaded.png');
+    this.cameras.main.setBackgroundColor(0x00ff80);
+    
+    var width = this.cameras.main.width;
+    var height = this.cameras.main.height;
+    
+    var progressBar = this.add.graphics();
+    var progressBox = this.add.graphics();
+    progressBox.fillStyle(0xFFFFFF, 0.8);
+    progressBox.fillRect(0, 260, 320, 50);
+     
+    var percentText = this.make.text({
+      x: width / 2,
+      y: height / 2,
+      text: '0%',
+      style: {
+        font: '18px monospace',
+        fill: 'black'
+      }
+    });
+    percentText.setOrigin(0.5, 0.5);
+    this.load.image('logo', 'src/assets/logo.png');
+    this.load.image('music_off', 'src/assets/musicOff.png');
+    this.load.image('music_on', 'src/assets/musicOn.png');
+    this.load.image('preloader', 'src/assets/preloader.png');
+    this.load.image('share', 'src/assets/share2.png');
+    this.load.image('leaderboardsComplex', 'src/assets/leaderboardsComplex.png');
+    this.load.image('open', 'src/assets/open.png');
+    //this.load.image('rating', 'src/assets/rating.png');
     this.load.image('background', 'src/assets/bg_layer1.png');
     this.load.image('spark', 'src/assets/particles.png');
     this.load.image('tile_1', 'src/assets/tile_1.png');
@@ -25,22 +53,27 @@ class PreloadScene extends Phaser.Scene {
     this.load.image('tile_14', 'src/assets/tile_14.png');
     this.load.image('tile_15', 'src/assets/tile_15.png');
     this.load.image('tile_16', 'src/assets/tile_16.png');
-
+    
     this.load.on('progress', function (value) {
-      console.log(value);
+      progressBar.clear();
+      progressBar.fillStyle(0xffffff, 1);
+      progressBar.fillRect(0, 270, 320 * value, 30);
+      percentText.setText(parseInt(value * 100) + '%');
     });
 
     this.load.on('fileprogress', function (file) {
-      console.log(file.src);
+      //console.log(file.key);
     });
 
     this.load.on('complete', function () {
-      console.log('complete');
+      progressBar.destroy();
+      progressBox.destroy();
+      percentText.destroy();
     });
   }
 
   create() {
-    this.scene.start('PlayGame');
+    this.scene.start('MenuScene');
   }
 }
 

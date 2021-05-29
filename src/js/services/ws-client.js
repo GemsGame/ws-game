@@ -1,10 +1,15 @@
 export default class WebSocketClient {
   constructor() {
-    this.socket = new WebSocket('ws://localhost:3011');
     this.clientId = null;
-    this.game = null;
-    this.getMessage();
+    this.game = {
+      players: []
+    };
+    this.messages = [];
   }
+  createConnection () {
+    this.socket = new WebSocket('ws://localhost:3011');
+  }
+
   getMessage() {
     this.socket.onmessage = (message) => {
       const response = JSON.parse(message.data);
@@ -18,11 +23,15 @@ export default class WebSocketClient {
       if (response.method === "search room") {
         if(response.find) {
           console.log('room found ->>');
+          this.messages.push('Комната найдена ->>');
           this.game = response.game;
           this.joinToGame();
+          this.messages.push('Подключаемся ->>');
         } else {
           console.log('room not found ->>');
+          this.messages.push('Комната не найдена ->>');
           this.createNewRoom();
+          this.messages.push('Создаем игру ->>');
           this.searchRoom();
         }
       }
@@ -30,6 +39,11 @@ export default class WebSocketClient {
         console.log('event ->>');
         this.game = response.game;
         console.log(this);
+      }
+
+      if(response.method === 'join') {
+        console.log('join ->>');
+        this.game = response.game;
       }
     }
   }

@@ -8,10 +8,40 @@ class PlayGame extends Phaser.Scene {
     this._deleteTiles = [];
     this.colors = ['0xFF00FF', '0x00ff00'];
     this.socket = new Socket();
+    this.start = false;
+
   }
+
+  findRoom() {
+    this.width = this.cameras.main.width;
+    this.height = this.cameras.main.height;
+    this.preloader = this.add.image(
+      this.cameras.main.width / 2,
+      this.cameras.main.height / 2.1,
+      'preloader'
+    ).setScale(0.5);
+
+    this.roomTextStatus = this.make.text({
+      x: this.width / 1.9,
+      y: this.height / 1.5,
+      text: '',
+      style: {
+        font: '16px monospace',
+        fill: 'white',
+
+        //backgroundColor: 'white'
+      }
+    });
+
+    this.roomTextStatus.setOrigin(0.5, 0.5);
+    this.roomTextStatus.z = 1;
+  }
+
   create() {
-    this.add.image(240, 320, 'background').setScrollFactor(1, 0);
-    this.createTiles();
+    this.cameras.main.setBackgroundColor(0x00ff80);
+    this.socket.createConnection();
+    this.socket.getMessage();
+    this.findRoom();
   }
   createTiles() {
     let row = 1;
@@ -62,8 +92,38 @@ class PlayGame extends Phaser.Scene {
 
   update() {
     this.tilesTouching();
+    this.preloader.rotation += 0.1;
+    this.roomTextStatus.setText(this.socket.messages.map(i => i));
+    if (this.socket.game.players.length === 2) {
+      if (this.start === false) {
+        this.start = true;
+        if (this.socket.game.tiles) {
+          this.add.image(240, 320, 'background').setScrollFactor(1, 0);
+          this.createTiles();
+          this.preloader.removedFromScene();
+          this.preloader.destroy();
+          this.roomTextStatus.destroy();
+        }
+      }
+
+      if (this.start === false) {
+       //this.endGame();
+      }
+    }
+
+
+
   }
 
+  endGame() {
+    const unicalTiles = this._allTiles.filter((item, index) => {
+      return this._allTiles.indexOf(item) === index;
+    });
+
+    if (unicalTiles.length === this._allTiles.length) {
+      this.start = false;
+    }
+  }
 
   tilesTouching() {
     this._allTiles.forEach(tile => {
@@ -86,7 +146,9 @@ class PlayGame extends Phaser.Scene {
 
       if (z.events && z.events.delete) {
         z.events.delete.map((i) => {
-          this._allTiles[i - 1].removeFromDisplayList();
+          if (this._allTiles[i - 1]) {
+            this._allTiles[i - 1].destroy();
+          }
         })
       }
     })
